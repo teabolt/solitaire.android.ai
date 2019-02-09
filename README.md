@@ -1,0 +1,1 @@
+# solitaire.android.ai
