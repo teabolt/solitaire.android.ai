@@ -97,7 +97,7 @@ def main():
         print 'Acting on touchpoints quickly and diagonally ...'
         touch(device, touchpoints, horizontal_drag_dist=100, vertical_drag_dist=200, drag_time=0.00001, delay=0.2)
         print 'Done'
-    print
+        print
 
 
 if __name__ == '__main__':
