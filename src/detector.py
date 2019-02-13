@@ -37,8 +37,9 @@ def iter_contours(contours, orig, path, carry_forward=False):
 
 class Card(object):
     """Wrapper for a playing card"""
-    def __init__(self, img):
-        self.img = img
+    def __init__(self, working_image):
+        self.img = working_image
+        self.orig = self.img    # image without any preprocessing for later reference
         self.rank = None
         self.suit = None
         self.colour = None  # 'B' (black) or 'R' (red)
@@ -48,8 +49,9 @@ class Card(object):
             game_strings.SUITS[self.suit], game_strings.RANKS[self.rank])
 
     def preprocess(self, preprocessed_image=None):
-        if preprocessed_image is not None:  
-            self.img = preprocessed_image   # original is destroyed
+        """Update the current image of the Card with a preprocessed version of the image."""
+        if preprocessed_image is not None:
+            self.img = preprocessed_image
 
     def set_rank(self, rank):
         self.rank = rank
@@ -64,9 +66,16 @@ class Card(object):
 
 
 class DetectedCard(Card):
-    def __init__(self, img, contour):
+    def __init__(self, working_image, contour, original_image):
         self.contour = contour
-        super().__init__(img)
+        self.orig = original_image
+        super().__init__(working_image)
+
+    def get_original(self):
+        if self.orig is not None:
+            return self.orig
+        else:
+            return self.img
 
     def preprocess(self, width_norm, height_norm):
         img = self.img     
@@ -127,6 +136,7 @@ class LayoutDetector(object):
 
     def __init__(self, target_image):
         self.img = target_image
+        self.orig = self.img    # original image as a reference for later
         self.cards = None
 
     def __str__(self):
@@ -143,10 +153,16 @@ class LayoutDetector(object):
         for card in self.cards:
             yield card
 
+    def get_original(self):
+        if self.orig is not None:
+            return self.orig
+        else:
+            return self.img
+
     def preprocess(self, preprocessed_image=None):
         """Preprocessor for the layout's image"""
         if preprocessed_image is not None:
-            self.img = preprocessed_image    # destroys the original
+            self.img = preprocessed_image
 
     def localise_cards(self, full_card_area, area_margin):
         contours, hierarchy = cv2.findContours(self.img, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
@@ -156,7 +172,8 @@ class LayoutDetector(object):
             x, y, w, h = cv2.boundingRect(cnt)
             x1, x2, y1, y2 = x, x+w, y, y+h # get vetrices of the contour bounding rectangle
             card_img = self.img[y1:y2, x1:x2]
-            card = DetectedCard(card_img, cnt)
+            card_orig = self.orig[y1:y2, x1:x2]
+            card = DetectedCard(card_img, cnt, card_orig)
             self.cards.append(card)
         return self.cards
 
@@ -314,7 +331,7 @@ def write_touchpoints(touchpoint_list, path):
 
 
 def main():
-    print('Starting detector ...')
+    print('Starting Image Detector script ...')
     # initialise the detector object
     layout_partition_scheme = [
         [TableauxDetector, 5, 360, 1075, 1600, ],
@@ -325,31 +342,40 @@ def main():
         training_image_width=146, training_image_height=226)
     det.load_trainer()
 
-    time.sleep(20)
-    screenshot = cv2.imread(settings.GAMESHOT_PATH)
-    print('Press any key when image window is active to close the image / continue')
-    print('Original image ...')
-    show(screenshot)
+    # begin 'read screenshot - write touchpoints' loop
+    while True:
+        # block until the Android script has a gameshot (screenshot) available
+        # poll for gameshot check file
+        while not os.path.isfile(settings.GAMESHOT_CHECK_PATH):
+            time.sleep(1)
+        os.remove(settings.GAMESHOT_CHECK_PATH) # clean up for next run
 
-    print('Localising and recognising full cards...')
-    det.set_gameshot(screenshot)
-    det.partition_layout(layout_partition_scheme)
-    cards = det.detect_cards()
-    print('I see {} cards'.format(len(det)))
-    for card in cards:
-        print('I see a {}'.format(str(card)))
-        show(card.img)
+        screenshot = cv2.imread(settings.GAMESHOT_PATH)
+        print('Press any key when image window is active to close the image / continue')
+        print('Original image ...')
+        show(screenshot)
 
-    print('Detected image ...')
-    recognised_screenshot = det.draw_detected()
-    show(recognised_screenshot)
+        print('Localising and recognising full cards...')
+        det.set_gameshot(screenshot)
+        det.partition_layout(layout_partition_scheme)
+        cards = det.detect_cards()
+        print('I see {} cards'.format(len(det)))
+        for card in cards:
+            print('I see a {}'.format(str(card)))
+            show(card.get_original())  # this does not always show the full colour crop, only the preprocessed version
 
-    print('Getting coordinates to interact with ...')
-    touchpoints = det.get_touchpoints()
-    print(touchpoints)
-    print('Writing coordinates ...')
-    write_touchpoints(touchpoints, settings.TOUCHPOINTS_PATH)
-    print('Done writing')
+        print('Detected image ...')
+        recognised_screenshot = det.draw_detected()
+        show(recognised_screenshot)
+
+        print('Getting coordinates to interact with ...')
+        touchpoints = det.get_touchpoints()
+        print(touchpoints)
+        print('Writing coordinates ...')
+        write_touchpoints(touchpoints, settings.TOUCHPOINTS_PATH)
+        with open(settings.TOUCHPOINTS_CHECK_PATH, 'w') as f:   # create a check file to synchronise with the Android script
+            pass
+        print('Done writing')
 
 
 if __name__ == '__main__':
