@@ -1,6 +1,7 @@
 # solitaire.android.ai
 
 # To-do / future enhancements:
+* Update 'run.sh' script to work well with paths / current working directory changes.
 * Implement a 'run' script for Windows (.bat file).
 * Make the detector show original images (not the preprocessed versions).
 * Make the image recognition accurate and actually working in most cases by using contours of the suit/rank symbols in the training and live/test data
