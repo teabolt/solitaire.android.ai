@@ -2,13 +2,19 @@
 
 A project to demonstrate automatic user-like interaction between an Android phone and a local developer PC. The PC receives screenshots of the Android phone screen, and the Android phone receives touch events from the PC.
 
+## Video demonstration
+
 ## Requirements
 * Android Phone
 * Micro-USB cable capable of connecting the phone to the PC
 * Android SDK with monkeyrunner (`~/Android/Sdk/tools/bin/monkeyrunner`) (Jython-based)
 * Python 3 (CPython)
 
-## To-do / future enhancements:
+## Usage
+
+## Implementation
+
+## To-do / future enhancements
 * Update 'run.sh' script to work well with paths / current working directory changes.
 * Implement a 'run' script for Windows (.bat file).
 * Make the detector show original images (not the preprocessed versions).
