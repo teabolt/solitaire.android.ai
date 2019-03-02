@@ -7,6 +7,7 @@ This interaction is applied to the card game Solitaire, that is an app on the An
 The ultimate goal is to completely automate the game so that cards are automatically moved to places where they should be. However, the project has not achieved this so far.
 
 ## Video demonstration
+(TODO)
 
 ## Requirements
 * Android Phone and a micro-USB cable that connects the phone to the PC
@@ -24,20 +25,23 @@ The ultimate goal is to completely automate the game so that cards are automatic
 ### On Windows
 (TODO)
 1. At the same time execute both `android_io.py` and `detector.py`
-    * `.../monkeyrunner android_io.py` (where `...` represents the directory where monkeyrunner is
+    * `.../monkeyrunner android_io.py` (where `...` represents the directory where monkeyrunner is placed)
     * `py -3 detector.py`
 
 ## Implementation
-* `monkeyrunner`, a tool of the Android SDK for testing and controlling an Android device, is used to take screenshots of the state of the game (current cards), and to send touch events to locations where certain objects in the game are present (open playing cards). 
+* `monkeyrunner`, a tool of the Android SDK for testing and controlling an Android device, is used to take screenshots of the state of the game (current cards), and to send touch events to locations where certain objects in the game are present (open playing cards).
+ * The screenshots are saved as 'png' file.
 * `opencv`, a third-party library computer vision library, is used to locate and classify the cards in a screenshot image (the 'gameshot') and write the coordinates to where the cards are ('touchpoints').
-  * The project contains all the possible card images with associated labels in `data/training/`.
+  * The project contains all the possible card images with associated labels in ```data/training/```.
   * A difference is taken between the detected card and each of the training cards to recognise the card.
-* The processes are synchronised (eg: block until a screenshot is taken, or until coordinates are written) via polling and writing of 'indicator files' 
+  * The touchpoints file ```touchpoints.dat``` is a newline-separated collection of coordinates (x and y components separated by a space).
+* The processes are synchronised via polling and writing of 'indicator files'
+  * The detector blocks until a screenshot is available. The Android IO code blocks until coordinates to touch are available.
   * Other solutions that did not work (interprocess communication based)
-    * Using the `signal` module to send Unix signals between two processes, interrupt-based programming (problem - sending a signal kills the process)
-    * Using the subprocess' module to have a parent (controller) and a child (controlled) process and pipes for two-way communication (problem - pipes override stdin/stdout, but the user interacts with the processes via stdin/stdout).
-    * Using 'multiprocessing' with synchronisation, eg: locks (problem - the two Python programs are incompatible - CPython vs Jython, version 3 vs version 2).
-  * Other solutions that could be tried
+    * Using the ```signal``` module to send Unix signals between two processes, interrupt-based programming (problem - sending a signal kills the process)
+    * Using the ```subprocess``` module to have a parent (controller) and a child (controlled) process and pipes for two-way communication (problem - pipes override stdin/stdout, but the user interacts with the processes via stdin/stdout).
+    * Using ```multiprocessing``` with synchronisation, eg: locks (problem - the two Python programs are incompatible - CPython vs Jython, version 3 vs version 2).
+  * Other solutions that could have been tried
     * sockets
 
 ## To-do / future enhancements
