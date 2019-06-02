@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # cpython 3.6
 
-import cv2
-import numpy as np
-
-import settings
-import game_strings
 
 import os
 import os.path
@@ -13,6 +8,12 @@ import sys
 import time
 import random
 import signal
+
+import cv2
+import numpy as np
+
+import game_strings
+from sync import do_signal, receive_signal
 
 
 def show(img):
@@ -39,7 +40,7 @@ class Card(object):
     """Wrapper for a playing card"""
     def __init__(self, working_image):
         self.img = working_image
-        self.orig = self.img    # image without any preprocessing for later reference
+        # self.orig = self.img    # image without any preprocessing for later reference
         self.rank = None
         self.suit = None
         self.colour = None  # 'B' (black) or 'R' (red)
@@ -184,6 +185,7 @@ class LayoutDetector(object):
         return area_difference < area_margin
 
     def recognise_cards(self, trainer):
+        # Classification
         for recog_card in self.cards:
             differences = sorted(trainer, key=lambda training_card: self.compute_card_difference(recog_card, training_card))
             top_match = differences[0]
@@ -274,6 +276,7 @@ class CardDetector(object):
         self.trainer = trainer
 
     def detect_cards(self):
+        # Detection = localisation + recognition/classification
         all_cards = []
         for obj, ROI in self.layouts:
             obj.preprocess()
@@ -331,26 +334,27 @@ def write_touchpoints(touchpoint_list, path):
 
 
 def main():
-    print('Starting Image Detector script ...')
+    print('[{}] Starting Image Detector script ...'.format(os.path.basename(sys.argv[0])))
+    GAMESHOT_PATH, TOUCHPOINTS_PATH, GAMESHOT_SYNCFILE_PATH, TOUCHPOINTS_SYNCFILE_PATH, TRAINING_DATA_DIR = sys.argv[1:]
     # initialise the detector object
+
+    # FIXME: These are hard-coded values
     layout_partition_scheme = [
         [TableauxDetector, 5, 360, 1075, 1600, ],
         [FoundationDetector, 5, 100, 615, 330, ],
         [StockDetector, 650, 100, 920, 330, ],
     ]
-    det = CardDetector(training_set_directory_path=settings.TRAINING_DATA_PATH, fully_visible_card_area=29700, allowed_area_difference_margin=10.0, 
+    # FIXME: These are hard coded device widths and heights
+    det = CardDetector(training_set_directory_path=TRAINING_DATA_DIR, fully_visible_card_area=29700, allowed_area_difference_margin=10.0, 
         training_image_width=146, training_image_height=226)
     det.load_trainer()
 
     # begin 'read screenshot - write touchpoints' loop
     while True:
         # block until the Android script has a gameshot (screenshot) available
-        # poll for gameshot check file
-        while not os.path.isfile(settings.GAMESHOT_CHECK_PATH):
-            time.sleep(1)
-        os.remove(settings.GAMESHOT_CHECK_PATH) # clean up for next run
+        receive_signal(GAMESHOT_SYNCFILE_PATH, 'Waiting for a screenshot from android_io')
 
-        screenshot = cv2.imread(settings.GAMESHOT_PATH)
+        screenshot = cv2.imread(GAMESHOT_PATH)
         print('Press any key when image window is active to close the image / continue')
         print('Original image ...')
         show(screenshot)
@@ -364,18 +368,19 @@ def main():
             print('I see a {}'.format(str(card)))
             show(card.get_original())  # this does not always show the full colour crop, only the preprocessed version
 
-        print('Detected image ...')
+        print('Image with my recognitions ...')
         recognised_screenshot = det.draw_detected()
         show(recognised_screenshot)
 
-        print('Getting coordinates to interact with ...')
+        print('Getting coordinates (touchpoints) to interact with ...')
         touchpoints = det.get_touchpoints()
         print(touchpoints)
-        print('Writing coordinates ...')
-        write_touchpoints(touchpoints, settings.TOUCHPOINTS_PATH)
-        with open(settings.TOUCHPOINTS_CHECK_PATH, 'w') as f:   # create a check file to synchronise with the Android script
-            pass
-        print('Done writing')
+        print('Writing coordinates at "{}"'.format(TOUCHPOINTS_PATH))
+        write_touchpoints(touchpoints, TOUCHPOINTS_PATH)
+
+        do_signal(TOUCHPOINTS_SYNCFILE_PATH, 'Signaling to android_io that touchpoints are available')
+
+        print('Done with this "screenshot-touchpoints" iteration')
 
 
 if __name__ == '__main__':

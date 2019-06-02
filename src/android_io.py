@@ -1,19 +1,15 @@
 # jython 2.5.3
 
-from com.android.monkeyrunner import MonkeyRunner, MonkeyDevice, MonkeyImage
 
 import sys
-# try:
-#     import settings
-# except ImportError:
-#     sys.path.append('.')
-#     import settings
-import settings
-
 import os
 import os.path
 import time
 import datetime
+
+from com.android.monkeyrunner import MonkeyRunner, MonkeyDevice, MonkeyImage
+
+from sync import do_signal, receive_signal
 
 
 PROPERTIES = [
@@ -28,7 +24,7 @@ def init_device():
     time.sleep(2)
     for prop in PROPERTIES:
         print prop + " is %s" % str(device.getProperty(prop))
-    print('Initialisation complete, continuing ... press CTRL-C to stop at any time\n')
+    print('Initialisation complete, continuing ... press CTRL+C to stop at any time\n')
     time.sleep(1)
     return device
 
@@ -40,7 +36,7 @@ def current_time():
 
 def take_screenshot(device, save_path=current_time, interactive=False):
     if interactive:
-        raw_input('Press ENTER followed by CTRL-D to take a screenshot\n')
+        raw_input('Press ENTER followed by CTRL+D to take a screenshot (CTRL+C to stop)\n')
     screenshot = device.takeSnapshot()
     if save_path is current_time:
         path = os.path.join(settings.LIVE_DATA_PATH, '%s.png' % current_time())
@@ -71,32 +67,29 @@ def touch(device, touchpoints, horizontal_drag_dist=0, vertical_drag_dist=100, d
 
 
 def main():
-    print 'Starting Android Input-Output script ...'
+    print '[%s] Starting Android Input-Output script ...' % os.path.basename(sys.argv[0])
+    GAMESHOT_PATH, TOUCHPOINTS_PATH, GAMESHOT_SYNCFILE_PATH, TOUCHPOINTS_SYNCFILE_PATH = sys.argv[1:]
     device = init_device()   # connect to the Android device (via USB cable)
 
     # begin 'write screenshot - read touchpoints' loop
     while True:
-        screenshot = take_screenshot(device, save_path=settings.GAMESHOT_PATH, interactive=True)
+        screenshot = take_screenshot(device, save_path=GAMESHOT_PATH, interactive=True)
+
         # make a gameshot check file to synchronise with the detector
-        open(settings.GAMESHOT_CHECK_PATH, 'w').close()
+        do_signal(GAMESHOT_SYNCFILE_PATH, 'Screenshot taken, signaling to detector')
 
-        # live directory must not have previous check files
         # Poll for a 'check file' to read the touchpoint coordinates (block until coordinates are available)
-        while not os.path.isfile(settings.TOUCHPOINTS_CHECK_PATH):
-            time.sleep(1)
-        # got a file, remove it to clean up for the next run
-        os.remove(settings.TOUCHPOINTS_CHECK_PATH)
+        receive_signal(TOUCHPOINTS_SYNCFILE_PATH, 'Waiting for detector to finish working with the image')
 
-        path = settings.TOUCHPOINTS_PATH
-        print 'Reading touchpoints from "%s"' % path
-        touchpoints = read_touchpoints(path)
+        print 'Reading touchpoints from "%s"' % TOUCHPOINTS_PATH
+        touchpoints = read_touchpoints(TOUCHPOINTS_PATH)
         print touchpoints
 
         print 'Acting on touchpoints (dragging cards down) ...'
         touch(device, touchpoints)
-        print 'Acting on touchpoints quickly and diagonally ...'
+        print 'Acting on touchpoints (faster speed and diagonal) ...'
         touch(device, touchpoints, horizontal_drag_dist=100, vertical_drag_dist=200, drag_time=0.00001, delay=0.2)
-        print 'Done'
+        print 'Done with this "screenshot-touch" iteration'
         print
 
 
