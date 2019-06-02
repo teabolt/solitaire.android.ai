@@ -9,7 +9,7 @@ The goal is to automate the game itself, using this "IO interface".
 
 ## How does it work
 
-<a href="https://developer.android.com/studio/test/monkeyrunner/">Monkeyrunner</a> is a Jython based tool in the Android SDK for automated tests. I use this tool in my program to retrieve device information, take screenshots, and send gestures.
+<a href="https://developer.android.com/studio/test/monkeyrunner/">Monkeyrunner</a> is a Jython (an implementation of Python that runs as Java) based tool in the Android SDK for automated tests. I use this tool in my program to retrieve device information, take screenshots, and send gestures.
 
 On the "backend" side, there is a script, based on OpenCV, that processes the screenshots to recognise and find locations of playing cards.
 
