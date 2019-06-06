@@ -60,10 +60,9 @@ def read_touchpoints(path):
     return touchpoints
 
 
-def touch(device, touchpoints, horizontal_drag_dist=0, vertical_drag_dist=100, drag_time=0.2, delay=0.5):
-    for x, y in touchpoints:
-        device.drag((x, y), (x+horizontal_drag_dist, y+vertical_drag_dist), drag_time)
-        time.sleep(delay)
+def touch(device, x, y, horizontal_drag_dist=0, vertical_drag_dist=100, drag_time=0.2, delay=0.5):
+    device.drag((x, y), (x+horizontal_drag_dist, y+vertical_drag_dist), drag_time)
+    time.sleep(delay)
 
 
 def main():
@@ -86,9 +85,12 @@ def main():
         print touchpoints
 
         print 'Acting on touchpoints (dragging cards down) ...'
-        touch(device, touchpoints)
+        for x, y in touchpoints:
+            touch(device, x, y)
         print 'Acting on touchpoints (faster speed and diagonal) ...'
-        touch(device, touchpoints, horizontal_drag_dist=100, vertical_drag_dist=200, drag_time=0.00001, delay=0.2)
+        for x, y in touchpoitns:
+            touch(device, x, y, horizontal_drag_dist=100, 
+                vertical_drag_dist=200, drag_time=0.00001, delay=0.2)
         print 'Done with this "screenshot-touch" iteration'
         print
 
