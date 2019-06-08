@@ -88,7 +88,7 @@ def main():
         for x, y in touchpoints:
             touch(device, x, y)
         print 'Acting on touchpoints (faster speed and diagonal) ...'
-        for x, y in touchpoitns:
+        for x, y in touchpoints:
             touch(device, x, y, horizontal_drag_dist=100, 
                 vertical_drag_dist=200, drag_time=0.00001, delay=0.2)
         print 'Done with this "screenshot-touch" iteration'
