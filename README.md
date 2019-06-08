@@ -69,6 +69,7 @@ You will find that the `live` directory is created and modified as the program r
   * This is the 'AI' part, implemented with simple image manipulation and matching.
   * Localisation is achieved by finding the contours of the image, and checking the contour area against expected card area. Particularly, the game screen is divided into sections - the 'tableaux' (columns of cards from A to 2), 'foundation' (reverse of tableaux, four decks for each colour), and 'stock' (face-down cards) - and different image processing is applied depending on the section.
   * Classification (multi-label) is achieved by comparing (computing the difference between) an unknown card and all the cards in `data/training`, taking the most similar card as the class. *There are accuracy problems with this approach*.
+  * Credits go to many online sources with code examples and ideas for the above.
 * `src/sync.py`
   * CPython and Jython compatible script for shared synchronisation functions `do_signal` and `receive_signal` with clean up actions.
   * Based on file existence polling.
