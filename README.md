@@ -21,7 +21,7 @@ An <a href="https://opencv.org/">OpenCV</a>-based Python script that processes s
   * This program does not work on its own.
 * Android SDK with the <a href="https://developer.android.com/studio/test/monkeyrunner/">monkeyrunner</a> test automation tool. 
   * On Linux this can usually be found at (`~/Android/Sdk/tools/bin/monkeyrunner`)
-* Python 3 (preferably CPython), with the following third-party packages:
+* Python 3 (preferably CPython), with these third-party libraries:
   * OpenCV
   * Numpy
 
@@ -45,9 +45,9 @@ If `run.py` does not work, try to execute `android_io.py` and `detector.py` at t
 You will find that the `live` directory is created and modified as the program runs.
 
 
-## Video Demonstration (tested on Python 3.7.3, Ubuntu 18.04 LTS, Samsung Galaxy S7)
+## Video Demonstration (tested using Python 3.7.3, Ubuntu 18.04 LTS, Samsung Galaxy S7)
 
-(TODO)
+<a href="https://youtu.be/Lg_T3SEeFTY" target="_blank"><img src="http://img.youtube.com/vi/Lg_T3SEeFTY/0.jpg" alt="Image from video showing a Linux command-line prompt with the script running, an OpenCV image window with a detected card, and screen of the connected mobile device with the Solitaire game on." width="240" height="180" border="10" /></a>
 
 
 ## Implementation Notes
